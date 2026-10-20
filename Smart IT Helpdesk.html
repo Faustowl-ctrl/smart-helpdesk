@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart IT Helpdesk | AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 800: '#1e293b', 900: '#0f172a' }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.4s ease-out forwards',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeInUp 0.3s ease-out; }
+        .nav-btn.active { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <!-- Шапка с эффектом стекла -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">IT</div>
+                    <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">Smart Helpdesk</h1>
+                </div>
+                <nav class="flex gap-1 bg-slate-100/50 p-1 rounded-xl">
+                    <button onclick="switchTab('employee')" class="nav-btn active px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">👤 Сотрудник</button>
+                    <button onclick="switchTab('admin')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-white/50 transition-all duration-200">🛡️ Сисадмин</button>
+                    <button onclick="switchTab('knowledge')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-white/50 transition-all duration-200">🧠 База знаний</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ВКЛАДКА: СОТРУДНИК -->
+        <div id="employee-tab" class="tab-content active">
+            <div class="max-w-3xl mx-auto">
+                <!-- Профиль -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Ваше имя и отдел</label>
+                    <input type="text" id="userName" placeholder="Например: Анна, Отдел маркетинга" 
+                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition outline-none">
+                </div>
+
+                <!-- Чат -->
+                <div class="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col h-[600px]">
+                    <div id="chatMessages" class="flex-1 overflow-y-auto chat-scroll p-6 space-y-6">
+                        <!-- Приветствие ИИ -->
+                        <div class="flex gap-4 animate-fade-in-up">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center flex-shrink-0 border border-primary-100">
+                                <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm p-4 max-w-[85%]">
+                                <p class="text-slate-700 leading-relaxed">Здравствуйте! Я виртуальный ассистент ИТ-отдела. Опишите вашу проблему, и я постараюсь решить её мгновенно. Если не получится — я передам заявку системному администратору.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Быстрые действия -->
+                    <div class="px-6 py-3 bg-slate-50/50 border-t border-slate-100">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Частые проблемы:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setPrompt('Не печатает принтер')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm hover:border-primary-300 hover:text-primary-600 hover:shadow-sm transition-all">🖨️ Принтер</button>
+                            <button onclick="setPrompt('Забыл пароль от учетной записи')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm hover:border-primary-300 hover:text-primary-600 hover:shadow-sm transition-all">🔑 Пароль</button>
+                            <button onclick="setPrompt('Не работает удаленный рабочий стол (RDP)')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm hover:border-primary-300 hover:text-primary-600 hover:shadow-sm transition-all">💻 RDP</button>
+                            <button onclick="setPrompt('Не работает микрофон в Teams/Zoom')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm hover:border-primary-300 hover:text-primary-600 hover:shadow-sm transition-all">🎤 Микрофон</button>
+                            <button onclick="setPrompt('Пришло подозрительное письмо')" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm hover:border-primary-300 hover:text-primary-600 hover:shadow-sm transition-all">⚠️ Фишинг</button>
+                        </div>
+                    </div>
+
+                    <!-- Ввод -->
+                    <div class="p-4 bg-white border-t border-slate-100">
+                        <div class="flex gap-3">
+                            <input type="text" id="messageInput" placeholder="Опишите проблему подробно..." 
+                                   class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition outline-none"
+                                   onkeypress="if(event.key === 'Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="px-5 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 active:scale-95 transition-all shadow-lg shadow-primary-500/30 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА: СИСАДМИН -->
+        <div id="admin-tab" class="tab-content">
+            <!-- Статистика -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-500">Всего заявок</span>
+                        <div class="p-2 bg-slate-100 rounded-lg text-slate-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>
+                    </div>
+                    <div class="text-3xl font-bold text-slate-800" id="statTotal">0</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-500">Новые</span>
+                        <div class="p-2 bg-blue-50 rounded-lg text-blue-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="text-3xl font-bold text-blue-600" id="statNew">0</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-500">Решено ИИ</span>
+                        <div class="p-2 bg-green-50 rounded-lg text-green-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="text-3xl font-bold text-green-600" id="statAI">0</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-500">В работе</span>
+                        <div class="p-2 bg-orange-50 rounded-lg text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="text-3xl font-bold text-orange-600" id="statPending">0</div>
+                </div>
+            </div>
+
+            <!-- Таблица -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 class="text-lg font-bold text-slate-800">Журнал заявок</h2>
+                    <div class="flex gap-2">
+                        <button onclick="exportCSV()" class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-sm font-medium hover:bg-emerald-100 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Экспорт CSV
+                        </button>
+                        <button onclick="clearAllTickets()" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-100 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Очистить
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 font-medium">
+                            <tr>
+                                <th class="px-6 py-4">Дата и время</th>
+                                <th class="px-6 py-4">Сотрудник</th>
+                                <th class="px-6 py-4">Описание проблемы</th>
+                                <th class="px-6 py-4">Приоритет</th>
+                                <th class="px-6 py-4">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTable" class="divide-y divide-slate-100">
+                            <!-- Заполняется JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="hidden p-12 text-center text-slate-400">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p>Заявок пока нет</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА: БАЗА ЗНАНИЙ -->
+        <div id="knowledge-tab" class="tab-content">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Правила ответов ИИ</h2>
+                        <p class="text-sm text-slate-500">Управляйте триггерами и ответами виртуального ассистента</p>
+                    </div>
+                    <button onclick="showAddRuleForm()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition shadow-lg shadow-primary-500/30 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Добавить правило
+                    </button>
+                </div>
+
+                <!-- Форма добавления -->
+                <div id="addRuleForm" class="hidden mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ключевые слова (через запятую)</label>
+                            <input type="text" id="newKeywords" placeholder="принтер, печать, картридж" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Категория</label>
+                            <select id="newCategory" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                                <option>Оборудование</option>
+                                <option>Сеть</option>
+                                <option>ПО</option>
+                                <option>Безопасность</option>
+                                <option>Доступы</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Ответ ИИ (поддерживает переносы строк)</label>
+                        <textarea id="newResponse" rows="3" placeholder="1. Проверьте... 2. Перезагрузите..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"></textarea>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="hideAddRuleForm()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition">Отмена</button>
+                        <button onclick="addRule()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">Сохранить правило</button>
+                    </div>
+                </div>
+
+                <!-- Список правил -->
+                <div id="rulesList" class="space-y-3">
+                    <!-- Заполняется JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // === ИНИЦИАЛИЗАЦИЯ ДАННЫХ ===
+        function initDemoData() {
+            if (!localStorage.getItem('tickets')) {
+                const demoTickets = [
+                    { id: 1, date: '20.10.2026 10:30', user: 'Петров А., Бухгалтерия', problem: 'Не печатает принтер HP на 3 этаже', priority: 'Средний', status: 'Новая' },
+                    { id: 2, date: '20.10.2026 11:15', user: 'Сидорова Е., HR', problem: 'Забыл пароль от учетной записи AD', priority: 'Высокий', status: 'В работе' },
+                    { id: 3, date: '20.10.2026 09:45', user: 'Козлов И., Продажи', problem: 'Не подключается VPN с домашнего ПК', priority: 'Высокий', status: 'Решено' },
+                    { id: 4, date: '20.10.2026 14:20', user: 'Новикова М., Маркетинг', problem: 'Пришло письмо с требованием перевести деньги', priority: 'Критический', status: 'Новая' }
+                ];
+                localStorage.setItem('tickets', JSON.stringify(demoTickets));
+            }
+
+            if (!localStorage.getItem('knowledgeBase')) {
+                const defaultRules = [
+                    { id: 1, category: 'Оборудование', keywords: ['принтер', 'печать', 'не печатает', 'картридж', 'сканер'], response: '1. Убедитесь, что принтер включен и не мигает индикатор ошибки.\n2. Проверьте наличие бумаги и тонера.\n3. Перезапустите службу печати (Пуск -> services.msc -> Диспетчер печати -> Перезапустить).\n4. Если не помогло, я передам заявку инженеру.' },
+                    { id: 2, category: 'Доступы', keywords: ['пароль', 'вход', 'не могу войти', 'забыл', 'заблокирован'], response: 'Сброс пароля можно выполнить самостоятельно через портал самообслуживания (sso.company.local).\nЕсли у вас нет доступа к порталу, я создам заявку в Service Desk на сброс пароля.' },
+                    { id: 3, category: 'Сеть', keywords: ['vpn', 'удаленка', 'удаленный доступ', 'не подключается', 'ошибка 691'], response: '1. Проверьте стабильность домашнего интернета.\n2. Убедитесь, что срок действия вашего сертификата не истек.\n3. Перезапустите клиент VPN и введите данные заново.\n4. Если появляется конкретный код ошибки, сообщите его мне.' },
+                    { id: 4, category: 'ПО', keywords: ['почта', 'email', 'outlook', 'не приходят письма', 'зависает'], response: '1. Проверьте папку "Нежелательная почта" (Спам).\n2. Убедитесь, что почтовый ящик не переполнен (лимит 5 ГБ).\n3. Попробуйте запустить Outlook в безопасном режиме: `outlook.exe /safe`.\n4. Если проблема сохраняется, я эскалирую заявку.' },
+                    { id: 5, category: 'ПО', keywords: ['1с', 'бухгалтерия', 'не открывается', 'тормозит', 'лицензия'], response: '1. Для веб-версии: очистите кэш браузера (Ctrl+Shift+Del).\n2. Для толстого клиента: запустите 1С от имени администратора.\n3. Если ошибка лицензирования: перезапустите службу "1С:Предприятие 8.3 Сервер" на сервере.' },
+                    { id: 6, category: 'Сеть', keywords: ['интернет', 'не грузит', 'медленно', 'нет сети', 'ограниченный доступ'], response: '1. Проверьте физическое подключение кабеля или значок Wi-Fi.\n2. Выполните диагностику сети (ПКМ по значку сети -> Диагностика).\n3. Попробуйте открыть сайт по IP (например, 8.8.8.8), чтобы исключить проблему DNS.\n4. Если интернета нет у всего отдела, я уже знаю и чиню.' },
+                    { id: 7, category: 'ПО', keywords: ['установить', 'программа', 'office', 'не работает', 'софт'], response: 'Установка некорпоративного ПО запрещена политикой безопасности.\nДля установки разрешенного ПО (Office, Adobe, специализированный софт) оставьте заявку в портале, указав обоснование.' },
+                    { id: 8, category: 'Доступы', keywords: ['доступ', 'папка', 'права', 'не открывает', 'сетевой диск'], response: 'Для получения доступа к сетевой папке необходимо:\n1. Согласовать доступ с вашим руководителем.\n2. Руководителю нужно отправить заявку на имя ИТ-директора.\n3. После согласования доступ будет предоставлен в течение 2 часов.' },
+                    { id: 9, category: 'Оборудование', keywords: ['телефон', 'сип', 'не звонит', 'гудки', 'нет связи'], response: '1. Проверьте подключение сетевого кабеля к телефону.\n2. Перезагрузите IP-телефон (выньте и вставьте кабель питания).\n3. Проверьте, не включен ли режим "Не беспокоить" (значок перечеркнутого телефона).\n4. Проверьте настройки в личном кабинете IP-телефонии.' },
+                    { id: 10, category: 'Оборудование', keywords: ['компьютер', 'тормозит', 'синий экран', 'не включается', 'bsod'], response: '1. Выполните полную перезагрузку ПК (не сон, а именно Перезагрузка).\n2. Если появляется "синий экран", сфотографируйте QR-код или код ошибки (например, CRITICAL_PROCESS_DIED).\n3. Если ПК не включается вообще, проверьте кабель питания и индикатор на блоке.' },
+                    { id: 11, category: 'ПО', keywords: ['rdp', 'удаленный рабочий стол', 'черный экран', 'терминальный сервер'], response: '1. Убедитесь, что вы подключены к корпоративному VPN (если работаете из дома).\n2. Если экран черный: нажмите Ctrl+Alt+End и выберите "Диспетчер задач", затем запустите explorer.exe.\n3. Ошибка лицензирования RDP решается очисткой кэша лицензий на клиенте.' },
+                    { id: 12, category: 'Доступы', keywords: ['домен', 'trust relationship', 'отношения доверия', 'учетная запись'], response: 'Ошибка "Отношения доверия между этой рабочей станцией и основным доменом нарушены" решается так:\n1. Выйдите из домена, войдите под локальным администратором.\n2. Перезагрузитесь.\n3. Введите ПК в домен заново.\nЕсли не уверены, я подключусь удаленно и сделаю это за вас.' },
+                    { id: 13, category: 'ПО', keywords: ['teams', 'zoom', 'микрофон', 'камера', 'вебинар', 'звук'], response: '1. Проверьте в настройках приложения, выбрано ли правильное устройство ввода/вывода (не "Default", а конкретная гарнитура).\n2. Проверьте физический переключатель mute на гарнитуре.\n3. В Windows: Параметры -> Звук -> Проверьте уровень громкости микрофона.' },
+                    { id: 14, category: 'Оборудование', keywords: ['мышь', 'клавиатура', 'монитор', 'нет сигнала', 'не печатает'], response: '1. Переподключите устройство в другой USB-порт (желательно в порт на задней панели ПК).\n2. Если это беспроводное устройство, замените батарейки.\n3. Если "Нет сигнала" на мониторе: проверьте кабель видео (HDMI/DP) и выберите правильный источник (Source) на мониторе.' },
+                    { id: 15, category: 'Безопасность', keywords: ['фишинг', 'подозрительное', 'вирус', 'вымогатель', 'шифрование'], response: '⚠️ НЕ ОТКРЫВАЙТЕ вложения и НЕ переходите по ссылкам!\n1. Немедленно закройте письмо.\n2. Перешлите его на адрес security@company.local с темой "ПОДОЗРИТЕЛЬНОЕ ПИСЬМО".\n3. Я передам это в отдел ИБ для анализа. Если вы уже открыли вложение, отключите ПК от сети и позвоните мне.' }
+                ];
+                localStorage.setItem('knowledgeBase', JSON.stringify(defaultRules));
+            }
+        }
+
+        // === УПРАВЛЕНИЕ ВКЛАДКАМИ ===
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-slate-600', 'hover:bg-white/50');
+                btn.classList.remove('text-white');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Находим кнопку, которую нажали, через event.target или по тексту (для надежности)
+            const buttons = document.querySelectorAll('.nav-btn');
+            if(tabName === 'employee') buttons[0].classList.add('active');
+            if(tabName === 'admin') {
+                buttons[1].classList.add('active');
+                renderTickets();
+            }
+            if(tabName === 'knowledge') {
+                buttons[2].classList.add('active');
+                renderKnowledgeBase();
+            }
+        }
+
+        // === ЛОГИКА ЧАТА ===
+        function setPrompt(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const userName = document.getElementById('userName').value.trim() || 'Анонимный пользователь';
+            const chatMessages = document.getElementById('chatMessages');
+
+            // Сообщение пользователя
+            const userMsg = document.createElement('div');
+            userMsg.className = 'flex gap-4 justify-end animate-fade-in-up';
+            userMsg.innerHTML = `
+                <div class="bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-2xl rounded-tr-sm p-4 max-w-[85%] shadow-md shadow-primary-500/20">
+                    <p class="leading-relaxed">${message}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 border border-slate-300">
+                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+            `;
+            chatMessages.appendChild(userMsg);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Индикатор набора текста
+            const thinkingMsg = document.createElement('div');
+            thinkingMsg.className = 'flex gap-4 animate-fade-in-up';
+            thinkingMsg.id = 'thinking';
+            thinkingMsg.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center flex-shrink-0 border border-primary-100">
+                    <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm p-4 flex items-center gap-1">
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(thinkingMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Ответ ИИ
+            setTimeout(() => {
+                document.getElementById('thinking').remove();
+                const response = getAIResponse(message);
+                
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'flex gap-4 animate-fade-in-up';
+                aiMsg.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center flex-shrink-0 border border-primary-100">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm p-4 max-w-[85%] shadow-sm">
+                        <p class="text-slate-700 leading-relaxed whitespace-pre-line mb-4">${response}</p>
+                        <button onclick="createTicket('${userName}', '${message.replace(/'/g, "\\'")}')" class="w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition shadow-md shadow-red-500/20 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Передать сисадмину
+                        </button>
+                    </div>
+                `;
+                chatMessages.appendChild(aiMsg);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1200);
+        }
+
+        function getAIResponse(message) {
+            const rules = JSON.parse(localStorage.getItem('knowledgeBase')) || [];
+            const lowerMessage = message.toLowerCase();
+
+            for (let rule of rules) {
+                for (let keyword of rule.keywords) {
+                    if (lowerMessage.includes(keyword.toLowerCase())) {
+                        return rule.response;
+                    }
+                }
+            }
+            return 'Я пока не знаю точного решения для этой проблемы, но я уже передал её описание системному администратору. Пожалуйста, нажмите кнопку ниже, чтобы создать официальную заявку, и с вами свяжутся в ближайшее время.';
+        }
+
+        function createTicket(user, problem) {
+            const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+            const newTicket = {
+                id: Date.now(),
+                date: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                user: user,
+                problem: problem,
+                priority: 'Средний',
+                status: 'Новая'
+            };
+            tickets.unshift(newTicket); // Добавляем в начало
+            localStorage.setItem('tickets', JSON.stringify(tickets));
+            
+            // Визуальное подтверждение
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Заявка создана!`;
+            btn.classList.replace('bg-red-500', 'bg-green-500');
+            btn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-green-500', 'bg-red-500');
+                btn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
+            }, 2000);
+        }
+
+        // === ЛОГИКА СИСАДМИНА ===
+        function renderTickets() {
+            const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+            const tbody = document.getElementById('ticketsTable');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (tickets.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                tickets.forEach(ticket => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-slate-600 whitespace-nowrap">${ticket.date}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">${ticket.user}</td>
+                        <td class="px-6 py-4 text-slate-600 max-w-md truncate" title="${ticket.problem}">${ticket.problem}</td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getPriorityClass(ticket.priority)}">${ticket.priority}</span></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusClass(ticket.status)}">${ticket.status}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            updateStats(tickets);
+        }
+
+        function getPriorityClass(p) {
+            if (p === 'Критический') return 'bg-red-100 text-red-700 border border-red-200';
+            if (p === 'Высокий') return 'bg-orange-100 text-orange-700 border border-orange-200';
+            if (p === 'Средний') return 'bg-blue-100 text-blue-700 border border-blue-200';
+            return 'bg-slate-100 text-slate-700 border border-slate-200';
+        }
+
+        function getStatusClass(s) {
+            if (s === 'Новая') return 'bg-blue-50 text-blue-700 border border-blue-100';
+            if (s === 'В работе') return 'bg-amber-50 text-amber-700 border border-amber-100';
+            return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+        }
+
+        function updateStats(tickets) {
+            document.getElementById('statTotal').textContent = tickets.length;
+            document.getElementById('statNew').textContent = tickets.filter(t => t.status === 'Новая').length;
+            document.getElementById('statPending').textContent = tickets.filter(t => t.status === 'В работе').length;
+            // Решено ИИ = те, которые не стали заявками (в демо просто считаем "Решено" как закрытые)
+            document.getElementById('statAI').textContent = tickets.filter(t => t.status === 'Решено').length;
+        }
+
+        function exportCSV() {
+            const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+            if(tickets.length === 0) { alert('Нет данных для экспорта'); return; }
+            let csv = '\uFEFFДата;Сотрудник;Проблема;Приоритет;Статус\n'; // BOM для Excel
+            tickets.forEach(t => {
+                csv += `"${t.date}";"${t.user}";"${t.problem}";"${t.priority}";"${t.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `helpdesk_export_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function clearAllTickets() {
+            if (confirm('Вы уверены? Все заявки будут безвозвратно удалены.')) {
+                localStorage.removeItem('tickets');
+                renderTickets();
+            }
+        }
+
+        // === ЛОГИКА БАЗЫ ЗНАНИЙ ===
+        function renderKnowledgeBase() {
+            const rules = JSON.parse(localStorage.getItem('knowledgeBase')) || [];
+            const list = document.getElementById('rulesList');
+            list.innerHTML = '';
+
+            rules.forEach(rule => {
+                const item = document.createElement('div');
+                item.className = 'group p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-primary-300 transition';
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-600">${rule.category}</span>
+                            <span class="text-xs text-slate-400">ID: ${rule.id}</span>
+                        </div>
+                        <button onclick="deleteRule(${rule.id})" class="text-slate-400 hover:text-red-600 transition p-1 rounded hover:bg-red-50">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Триггеры:</div>
+                        <div class="flex flex-wrap gap-1">
+                            ${rule.keywords.map(k => `<span class="px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs">${k}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ответ ИИ:</div>
+                        <div class="text-sm text-slate-700 whitespace-pre-line bg-white p-3 rounded-lg border border-slate-100">${rule.response}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function showAddRuleForm() { document.getElementById('addRuleForm').classList.remove('hidden'); }
+        function hideAddRuleForm() { 
+            document.getElementById('addRuleForm').classList.add('hidden');
+            document.getElementById('newKeywords').value = '';
+            document.getElementById('newResponse').value = '';
+        }
+
+        function addRule() {
+            const keywords = document.getElementById('newKeywords').value.split(',').map(k => k.trim()).filter(k => k);
+            const response = document.getElementById('newResponse').value;
+            const category = document.getElementById('newCategory').value;
+
+            if (!keywords.length || !response) { alert('Заполните ключевые слова и ответ'); return; }
+
+            const rules = JSON.parse(localStorage.getItem('knowledgeBase')) || [];
+            rules.push({ id: Date.now(), category, keywords, response });
+            localStorage.setItem('knowledgeBase', JSON.stringify(rules));
+
+            hideAddRuleForm();
+            renderKnowledgeBase();
+        }
+
+        function deleteRule(id) {
+            if (!confirm('Удалить это правило?')) return;
+            let rules = JSON.parse(localStorage.getItem('knowledgeBase')) || [];
+            rules = rules.filter(r => r.id !== id);
+            localStorage.setItem('knowledgeBase', JSON.stringify(rules));
+            renderKnowledgeBase();
+        }
+
+        // Запуск
+        initDemoData();
+    </script>
+</body>
+</html>
